@@ -11,11 +11,14 @@ import (
 	"os"
 	"time"
 
+	"github.com/joho/godotenv"
+
 	"github.com/davecgh/go-spew/spew"
 
 	"github.com/gorilla/mux"
 )
 
+// Block models the Data for a block in the Blockchain
 type Block struct {
 	Index     int
 	Timestamp string
@@ -24,10 +27,12 @@ type Block struct {
 	PrevHash  string
 }
 
+// Message models the data for a request to create a new Block
 type Message struct {
 	BPM int
 }
 
+// Blockchain is a variable holding the chain of Blocks
 var Blockchain []Block
 
 func calculateHash(block Block) string {
@@ -117,11 +122,7 @@ func handleWriteNewBlock(w http.ResponseWriter, r *http.Request) {
 
 	defer r.Body.Close()
 
-	var prevBlock Block
-
-	if numOfBlocks := len(Blockchain); numOfBlocks > 0 {
-		prevBlock = Blockchain[numOfBlocks-1]
-	}
+	prevBlock := Blockchain[len(Blockchain)-1]
 
 	newBlock, err := generateBlock(prevBlock, message.BPM)
 	if err != nil {
@@ -148,4 +149,19 @@ func respondWithJSON(w http.ResponseWriter, r *http.Request, code int, payload i
 
 	w.WriteHeader(code)
 	w.Write(response)
+}
+
+func main() {
+	if err := godotenv.Load(); err != nil {
+		log.Fatal(err)
+	}
+
+	go func() {
+		t := time.Now()
+		genesisBlock := Block{0, t.String(), 0, "", ""}
+		spew.Dump(generateBlock)
+		Blockchain = append(Blockchain, genesisBlock)
+	}()
+
+	log.Fatal(run())
 }
