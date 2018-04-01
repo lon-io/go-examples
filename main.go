@@ -25,16 +25,34 @@ func calculateHash(block Block) string {
 	return hex.EncodeToString(hashed)
 }
 
-func generateBlock(oldBlock Block, bpm int) (Block, error) {
+func generateBlock(prevBlock Block, bpm int) (Block, error) {
 	var newBlock Block
 
 	t := time.Now()
 
-	newBlock.Index = oldBlock.Index + 1
+	newBlock.Index = prevBlock.Index + 1
 	newBlock.Timestamp = t.String()
 	newBlock.BPM = bpm
-	newBlock.PrevHash = oldBlock.Hash
+	newBlock.PrevHash = prevBlock.Hash
 	newBlock.Hash = calculateHash(newBlock)
 
 	return newBlock, nil
+}
+
+func isBlockValid(block Block, prevBlock Block) bool {
+	wrongIndex := block.Index != prevBlock.Index+1
+	wrongPrevHash := block.PrevHash != prevBlock.Hash
+	wrongHash := block.Hash != calculateHash(block)
+
+	if wrongIndex || wrongPrevHash || wrongHash {
+		return false
+	}
+
+	return true
+}
+
+func replaceChain(newBlocks []Block) {
+	if len(newBlocks) > len(Blockchain) {
+		Blockchain = newBlocks
+	}
 }
